@@ -1,5 +1,6 @@
 package com.example.listycity3
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,6 +31,7 @@ import com.example.listycity3.ui.theme.ListyCity3Theme
 fun CityListScreen(
     cities: List<City>,
     onAddCity: (City) -> Unit,
+    onEditCity: (City, City) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var newCityName by remember { mutableStateOf("") }
@@ -95,7 +97,7 @@ fun CityListScreen(
 
         LazyColumn(modifier = modifier.fillMaxSize()) {
             itemsIndexed(cities) { index, city ->
-                CityRow(city = city)
+                CityRow(city = city, onEditCity = onEditCity)
 
                 if (index < cities.lastIndex) {
                     HorizontalDivider()
@@ -106,9 +108,22 @@ fun CityListScreen(
 }
 
 @Composable
-fun CityRow(city: City) {
+fun CityRow(
+    city: City,
+    onEditCity: (City, City) -> Unit
+) {
+    var newCityName by remember { mutableStateOf("") }
+    var newProvinceName by remember { mutableStateOf("") }
+    var selectedCity by remember { mutableStateOf<City?>(null) }
+    var showEditCityFields by remember { mutableStateOf(false) }
     Row(
         modifier = Modifier
+            .clickable(
+                onClick = {
+                    showEditCityFields = !showEditCityFields
+                    selectedCity = city
+                }
+            )
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 16.dp)
     ) {
@@ -124,6 +139,49 @@ fun CityRow(city: City) {
             modifier = Modifier.weight(1f)
         )
     }
+    if (showEditCityFields) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 16.dp)
+        ) {
+            OutlinedTextField(
+                value = newCityName,
+                onValueChange = { newCityName = it },
+                label = { Text("City") },
+                modifier = Modifier.weight(1f)
+            )
+
+            Spacer(modifier = Modifier.width(8.dp))
+            OutlinedTextField(
+                value = newProvinceName,
+                onValueChange = { newProvinceName = it },
+                label = { Text("Province") },
+                modifier = Modifier.weight(1f)
+            )
+
+            Spacer(modifier = Modifier.width(8.dp))
+            Button(
+                modifier = Modifier.padding(vertical = 12.dp),
+                onClick = {
+                    if (newCityName.isNotBlank() && newProvinceName.isNotBlank()) {
+                        onEditCity(
+                            selectedCity!!,
+                            City(
+                                name = newCityName,
+                                province = newProvinceName
+                            )
+                        )
+                        newCityName = ""
+                        newProvinceName = ""
+                        showEditCityFields = false
+                    }
+                }
+            ) {
+                Text("Edit City")
+            }
+        }
+    }
 }
 
 @Preview(showBackground = true)
@@ -136,7 +194,8 @@ fun CityListScreenPreview() {
                 City("Vancouver", "BC"),
                 City("Calgary", "AB")
             ),
-            onAddCity = {}
+            onAddCity = {},
+            onEditCity = {_,_ ->}
         )
     }
 }
